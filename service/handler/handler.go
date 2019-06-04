@@ -1,20 +1,31 @@
 package handler
 
 import (
-	"reflect"
+	"context"
+
+	"github.com/blushft/meld/service/method"
 )
 
 type Handler interface {
 	Name() string
-	Request() *HandlerDef
-	Response() *HandlerDef
-	Meta() map[string]string
+	Options() *HandlerOptions
+	Methods() []method.Method
+	Call(ctx context.Context, method string, req interface{}, resp interface{}, opts ...HandlerOption) error
+	Meta() map[string]map[string]string
 }
 
-type HandlerDef struct {
-	Name   string        `json:"name"`
-	Type   string        `json:"type"`
-	Values []*HandlerDef `json:"arguments"`
+type HandlerOptions struct {
+	Name string
+	Meta map[string]map[string]string
+	Type string
 }
 
-type HandlerInvocation func(name string, reqType, respType reflect.Type) (Handler, error)
+type HandlerOption func(*HandlerOptions)
+
+type HandlerInvocation func(v interface{}, opts ...HandlerOption) (Handler, error)
+
+func Name(n string) HandlerOption {
+	return func(o *HandlerOptions) {
+		o.Name = n
+	}
+}

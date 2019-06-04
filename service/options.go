@@ -8,10 +8,11 @@ import (
 )
 
 type Options struct {
-	Name    string
-	Version semver.Version
-	Labels  map[string]string
-	Tags    []string
+	Name      string
+	Namespace string
+	Version   semver.Version
+	Labels    map[string]string
+	Tags      []string
 
 	Connectors map[string]connector.Connector
 	Meta       metadata.Metadata
@@ -41,6 +42,12 @@ func Connector(c connector.Connector) Option {
 func Name(n string) Option {
 	return func(o *Options) {
 		o.Name = n
+	}
+}
+
+func Namespace(ns string) Option {
+	return func(o *Options) {
+		o.Namespace = ns
 	}
 }
 

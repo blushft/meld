@@ -1,20 +1,21 @@
 package method
 
 import (
-	"context"
 	"reflect"
-
-	"github.com/blushft/meld/service/handler"
 )
 
 type Method interface {
 	Name() string
-	Request() *handler.HandlerDef
-	Response() *handler.HandlerDef
+	Request() *MethodDef
+	Response() *MethodDef
 	Metadata() map[string]string
-	// Handle(h Handler) error
 	Options() *MethodOptions
-	Call(ctx context.Context, req interface{}, resp interface{}, opts ...MethodOption) error
+}
+
+type MethodDef struct {
+	Name   string       `json:"name"`
+	Type   string       `json:"type"`
+	Values []*MethodDef `json:"arguments"`
 }
 
 type MethodOptions struct {

@@ -3,23 +3,21 @@ package method
 import (
 	"context"
 	"reflect"
-
-	"github.com/blushft/meld/service/handler"
-	"github.com/blushft/meld/service/handler/rpc"
+	"strings"
 )
 
 type rpcMethod struct {
-	name string
-
-	opts *MethodOptions
-	h    handler.Handler
+	name     string
+	request  *MethodDef
+	response *MethodDef
+	opts     *MethodOptions
 }
 
 func NewMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
-	return newMethod(rm, opts...)
+	return newRPCMethod(rm, opts...)
 }
 
-func newMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
+func newRPCMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
 	options := &MethodOptions{
 		Meta: make(map[string]string),
 	}
@@ -28,9 +26,7 @@ func newMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
 		o(options)
 	}
 
-	m := &rpcMethod{
-		opts: options,
-	}
+	m := &rpcMethod{}
 
 	if err := m.extractMethod(rm); err != nil {
 		return nil, err
@@ -43,12 +39,12 @@ func (m *rpcMethod) Name() string {
 	return m.name
 }
 
-func (m *rpcMethod) Request() *handler.HandlerDef {
-	return m.h.Request()
+func (m *rpcMethod) Request() *MethodDef {
+	return m.request
 }
 
-func (m *rpcMethod) Response() *handler.HandlerDef {
-	return m.h.Response()
+func (m *rpcMethod) Response() *MethodDef {
+	return m.response
 }
 
 func (m *rpcMethod) Metadata() map[string]string {
@@ -87,13 +83,74 @@ func (m *rpcMethod) extractMethod(rm reflect.Method) error {
 		//do something
 	}
 
-	h, err := rpc.NewHandler(rm.Name, reqType, respType)
-	if err != nil {
+	m.request = extractSig(reqType, 0)
+	m.response = extractSig(respType, 0)
+
+	m.name = rm.Name
+	return nil
+}
+
+func extractSig(v reflect.Type, d int) *MethodDef {
+	if d == 3 {
+		return nil
+	}
+	if v == nil {
 		return nil
 	}
 
-	m.name = rm.Name
-	m.h = h
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
 
-	return nil
+	if len(v.Name()) == 0 {
+		return nil
+	}
+
+	val := &MethodDef{
+		Name: v.Name(),
+		Type: v.Name(),
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		for i := 0; i < v.NumField(); i++ {
+			f := v.Field(i)
+			fval := extractSig(f.Type, d+1)
+			if fval == nil {
+				continue
+			}
+
+			if tags := f.Tag.Get("json"); len(tags) > 0 {
+				tp := strings.Split(tags, ",")
+				if tp[0] == "-" || tp[0] == "omitempty" {
+					continue
+				}
+				fval.Name = tp[0]
+			} else {
+				fval.Name = ""
+			}
+
+			if len(fval.Name) == 0 {
+				fval.Name = f.Name
+			}
+
+			if len(fval.Name) == 0 {
+				continue
+			}
+
+			val.Values = append(val.Values, fval)
+		}
+	case reflect.Slice:
+		p := v.Elem()
+		if p.Kind() == reflect.Ptr {
+			p = p.Elem()
+		}
+		val.Type = "[]" + p.Name()
+		fval := extractSig(v.Elem(), d+1)
+		if fval != nil {
+			val.Values = append(val.Values, fval)
+		}
+	}
+
+	return val
 }
