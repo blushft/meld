@@ -9,4 +9,8 @@
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
+<<<<<<< HEAD
 *.out
+=======
+*.out
+>>>>>>> a592ea91e7fe586d095f83cf060873dc0f9d1f0f
