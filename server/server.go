@@ -10,7 +10,7 @@ type Server interface {
 	Options() Options
 	Register(...service.Service) error
 	Configure(...Option)
-	Services() []service.Service
+	Endpoints() map[string]Endpoint
 	Start() error
 	Stop() error
 }
