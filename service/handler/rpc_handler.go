@@ -1,32 +1,40 @@
 package handler
 
+// TODO: Flatten methods and functions.
+// Either make function fulfill method interface or implement rpcMethod logic for
+// functions.
+// Can handler handle multiple functions? probably no
+// TODO: Implement Call stack service.Call calls handler.Call calls method.Call
+// TODO: Create Request interface
+
 import (
 	"context"
+	"errors"
+	"log"
 	"reflect"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 
-	"github.com/blushft/meld/service/method"
+	"github.com/blushft/meld/service/handler/function"
+	"github.com/blushft/meld/service/handler/method"
+	"github.com/blushft/meld/utility"
 )
 
 type rpcHandler struct {
-	v       interface{}
-	methods []method.Method
-	opts    *HandlerOptions
+	v         interface{}
+	methods   []method.Method
+	functions []function.Function
+	opts      *HandlerOptions
 }
 
-func NewHandler(v interface{}, opts ...HandlerOption) (Handler, error) {
+func NewHandler(v interface{}, opts ...HandlerOption) Handler {
 	return newRPCHandler(v)
 }
 
-func newRPCHandler(v interface{}, opts ...HandlerOption) (Handler, error) {
-
-	hType := reflect.TypeOf(v)
-	handler := reflect.ValueOf(v)
-	n := reflect.Indirect(handler).Type().Name()
+func newRPCHandler(v interface{}, opts ...HandlerOption) Handler {
 
 	options := &HandlerOptions{
-		Name: n,
 		Meta: make(map[string]map[string]string),
 		Type: "rpc",
 	}
@@ -34,26 +42,68 @@ func newRPCHandler(v interface{}, opts ...HandlerOption) (Handler, error) {
 		o(options)
 	}
 
+	attr := utility.Attr(v)
+	spew.Dump(attr)
+	hType := reflect.TypeOf(v)
+	// handler := reflect.ValueOf(v)
+
 	methods := make([]method.Method, 0)
-	for m := 0; m < hType.NumMethod(); m++ {
-		if e, _ := method.NewMethod(hType.Method(m)); e != nil {
-			mName := n + "." + e.Name()
+	functions := make([]function.Function, 0)
+	var err error
 
-			for k, v := range options.Meta[mName] {
-				e.Options().Meta[k] = v
-			}
+	switch attr["kind"] {
+	case "struct":
+		methods, err = extractMethods(hType)
+		if err != nil {
+			log.Println(err)
+		}
+	case "func":
+		fn, err := extractFunc(v)
+		if err != nil {
+			log.Println(err)
+		}
+		functions = append(functions, fn)
+	}
 
+	if len(options.Name) == 0 {
+		options.Name = attr["name"]
+	}
+	h := &rpcHandler{
+		functions: functions,
+		methods:   methods,
+		opts:      options,
+		v:         v,
+	}
+
+	return h
+}
+
+func extractMethods(typ reflect.Type) ([]method.Method, error) {
+	methods := make([]method.Method, 0)
+	errs := make([]string, 0)
+	var retErr error
+	for m := 0; m < typ.NumMethod(); m++ {
+		e, err := method.NewMethod(typ.Method(m))
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
+		if e != nil {
 			methods = append(methods, e)
 		}
-	}
 
-	h := &rpcHandler{
-		methods: methods,
-		opts:    options,
-		v:       v,
 	}
+	if len(errs) > 0 {
+		retErr = errors.New(strings.Join(errs, "; "))
+	}
+	return methods, retErr
+}
 
-	return h, nil
+func extractFunc(v interface{}) (function.Function, error) {
+	fn, err := function.NewFunction(v)
+	if err != nil {
+		return nil, err
+	}
+	return fn, nil
 }
 
 func (r *rpcHandler) Name() string {
@@ -74,13 +124,13 @@ func (r *rpcHandler) Call(ctx context.Context, method string, req interface{}, r
 		reflect.ValueOf(req),
 		reflect.ValueOf(resp),
 	}
-	spew.Dump(in)
+	cerr := m.Call(in)
+	err, ok := cerr[0].Interface().(error)
+	if !ok || err != nil {
+		return err
+	}
 
-	mresp := m.Call(in)
-	spew.Dump(mresp[0].Interface())
-	spew.Dump(resp)
 	return nil
-
 }
 
 func (r *rpcHandler) Meta() map[string]map[string]string {

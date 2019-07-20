@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/blushft/meld/common/metadata"
+	"github.com/blushft/meld/context/metadata"
 
 	"github.com/blang/semver"
 	"github.com/blushft/meld/connector"

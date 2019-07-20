@@ -19,14 +19,17 @@ func NewMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
 
 func newRPCMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
 	options := &MethodOptions{
-		Meta: make(map[string]string),
+		Labels: make(map[string]string),
+		Tags:   make([]string, 0),
 	}
 
 	for _, o := range opts {
 		o(options)
 	}
 
-	m := &rpcMethod{}
+	m := &rpcMethod{
+		opts: options,
+	}
 
 	if err := m.extractMethod(rm); err != nil {
 		return nil, err
@@ -36,7 +39,7 @@ func newRPCMethod(rm reflect.Method, opts ...MethodOption) (Method, error) {
 }
 
 func (m *rpcMethod) Name() string {
-	return m.name
+	return m.opts.Name
 }
 
 func (m *rpcMethod) Request() *MethodDef {
@@ -45,10 +48,6 @@ func (m *rpcMethod) Request() *MethodDef {
 
 func (m *rpcMethod) Response() *MethodDef {
 	return m.response
-}
-
-func (m *rpcMethod) Metadata() map[string]string {
-	return m.opts.Meta
 }
 
 func (m *rpcMethod) Options() *MethodOptions {
@@ -85,8 +84,9 @@ func (m *rpcMethod) extractMethod(rm reflect.Method) error {
 
 	m.request = extractSig(reqType, 0)
 	m.response = extractSig(respType, 0)
-
-	m.name = rm.Name
+	if m.opts.Name == "" {
+		m.opts.Name = rm.Name
+	}
 	return nil
 }
 
@@ -109,6 +109,7 @@ func extractSig(v reflect.Type, d int) *MethodDef {
 	val := &MethodDef{
 		Name: v.Name(),
 		Type: v.Name(),
+		t:    v,
 	}
 
 	switch v.Kind() {

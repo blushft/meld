@@ -73,8 +73,8 @@ func Test_newService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := newService(tt.args.h, tt.args.opts...)
-			h, _ := handler.NewHandler(&StatusCheck{})
+			s := newRPCService(tt.args.h, tt.args.opts...)
+			h := handler.NewHandler(&StatusCheck{})
 			s.Handle(h)
 			fmt.Println(s.Usage())
 			fmt.Println(s.Handlers())
@@ -88,8 +88,8 @@ func Test_service_Call(t *testing.T) {
 		ctx     context.Context
 		handler string
 		method  string
-		req     interface{}
-		resp    interface{}
+		req     HelloReq
+		resp    *HelloResp
 		opts    []CallOptions
 	}
 	tests := []struct {
@@ -100,7 +100,7 @@ func Test_service_Call(t *testing.T) {
 	}{
 		{
 			name: "test",
-			s: newService(&Greeter{}, []Option{
+			s: newRPCService(&Greeter{}, []Option{
 				Name("testsvc"),
 				Namespace("meld.test"),
 				WithTag("test", "testing", "greet"),
@@ -119,7 +119,7 @@ func Test_service_Call(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.s.Call(tt.args.ctx, tt.args.handler, tt.args.method, tt.args.req, tt.args.resp, tt.args.opts...)
-			fmt.Println(tt.args.resp.(*HelloResp).Message)
+			fmt.Println(tt.args.resp.Message)
 		})
 	}
 }

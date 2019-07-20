@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	"github.com/blushft/meld/service/method"
+	"github.com/blushft/meld/service/handler/method"
 )
 
 type Handler interface {
@@ -22,7 +22,7 @@ type HandlerOptions struct {
 
 type HandlerOption func(*HandlerOptions)
 
-type HandlerInvocation func(v interface{}, opts ...HandlerOption) (Handler, error)
+type HandlerInvocation func(v interface{}, opts ...HandlerOption) Handler
 
 func Name(n string) HandlerOption {
 	return func(o *HandlerOptions) {

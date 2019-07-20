@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/blushft/meld/service/handler"
-	"github.com/blushft/meld/service/method"
+	"github.com/blushft/meld/service/handler/method"
 )
 
 var (

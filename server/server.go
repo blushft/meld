@@ -2,20 +2,22 @@ package server
 
 import (
 	"github.com/blushft/meld/service"
+	"github.com/blushft/meld/service/handler"
 )
 
 type Server interface {
 	Name() string
 	Options() Options
-	Register(...Option) error
+	Register(...service.Service) error
+	Configure(...Option)
 	Services() []service.Service
 	Start() error
 	Stop() error
 }
 
-type Handler interface {
+type Listener interface {
 	Name() string
 	Handler() interface{}
 	// Endpoints() []router.Endpoint
-	Options() HandlerOptions
+	Options() handler.HandlerOptions
 }
