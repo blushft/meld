@@ -9,8 +9,7 @@ import (
 type Structs struct{}
 
 func (s *Structs) ToMap(v interface{}) map[string]interface{} {
-	y := structs.New(v)
-	m := y.Map()
+	m := structs.Map(v)
 	return m
 }
 

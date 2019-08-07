@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-
-	"github.com/blushft/meld/service/handler"
 )
 
 type Greeter struct{}
@@ -18,7 +16,7 @@ type HelloResp struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (g *Greeter) Hello(ctx context.Context, req HelloReq, resp *HelloResp, opts ...handler.HandlerOption) error {
+func (g *Greeter) Hello(ctx context.Context, req HelloReq, resp *HelloResp, opts ...HandlerOption) error {
 	resp.Message = fmt.Sprintf("Hello, %s", req.Name)
 	return nil
 }
@@ -32,7 +30,7 @@ type WelcomeResp struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (g *Greeter) Welcome(ctx context.Context, req WelcomeReq, resp *WelcomeResp, opts ...handler.HandlerOption) error {
+func (g *Greeter) Welcome(ctx context.Context, req WelcomeReq, resp *WelcomeResp, opts ...HandlerOption) error {
 	s := req.Name
 	if req.Salutory != "" {
 		s = fmt.Sprintf("%s %s", req.Salutory, req.Name)
@@ -43,7 +41,7 @@ func (g *Greeter) Welcome(ctx context.Context, req WelcomeReq, resp *WelcomeResp
 
 type StatusCheck struct{}
 
-func (s *StatusCheck) Check(ctx context.Context, req struct{}, resp *string, opts ...handler.HandlerOption) error {
+func (s *StatusCheck) Check(ctx context.Context, req struct{}, resp *string, opts ...HandlerOption) error {
 	*resp = "ok"
 	return nil
 }
@@ -73,8 +71,8 @@ func Test_newService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := newRPCService(tt.args.h, tt.args.opts...)
-			h := handler.NewHandler(&StatusCheck{})
+			s := newService(tt.args.h, tt.args.opts...)
+			h := NewHandler(&StatusCheck{})
 			s.Handle(h)
 			fmt.Println(s.Usage())
 			fmt.Println(s.Handlers())
@@ -85,12 +83,8 @@ func Test_newService(t *testing.T) {
 
 func Test_service_Call(t *testing.T) {
 	type args struct {
-		ctx     context.Context
-		handler string
-		method  string
-		req     HelloReq
-		resp    *HelloResp
-		opts    []CallOptions
+		req  Request
+		resp *HelloResp
 	}
 	tests := []struct {
 		name    string
@@ -100,7 +94,7 @@ func Test_service_Call(t *testing.T) {
 	}{
 		{
 			name: "test",
-			s: newRPCService(&Greeter{}, []Option{
+			s: newService(&Greeter{}, []Option{
 				Name("testsvc"),
 				Namespace("meld.test"),
 				WithTag("test", "testing", "greet"),
@@ -108,17 +102,21 @@ func Test_service_Call(t *testing.T) {
 				Version("0.1.0"),
 			}...),
 			args: args{
-				ctx:     context.Background(),
-				handler: "Greeter",
-				method:  "Hello",
-				req:     HelloReq{Name: "Tester"},
-				resp:    &HelloResp{},
+				req: NewRequest(
+					context.Background(),
+					"testsvc",
+					"Greeter",
+					"Hello",
+					nil,
+					NewRequestBody("struct", HelloReq{Name: "Tester"}),
+				),
+				resp: &HelloResp{},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.s.Call(tt.args.ctx, tt.args.handler, tt.args.method, tt.args.req, tt.args.resp, tt.args.opts...)
+			tt.s.Call(tt.args.req, tt.args.resp)
 			fmt.Println(tt.args.resp.Message)
 		})
 	}

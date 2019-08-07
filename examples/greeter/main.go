@@ -5,22 +5,19 @@ import (
 	"log"
 
 	greeter "github.com/blushft/meld/examples/greeter/service"
-	echo "github.com/blushft/meld/server/transport/http_echo"
 	"github.com/blushft/meld/service"
-	"github.com/blushft/meld/service/handler"
 
 	"github.com/blushft/meld/server"
 )
 
 type StatusCheck struct{}
 
-func (s *StatusCheck) Check(ctx context.Context, req struct{}, resp *string, opts ...handler.HandlerOption) error {
+func (s *StatusCheck) Check(ctx context.Context, req interface{}, resp *string, opts ...service.HandlerOption) error {
 	*resp = "ok"
 	return nil
 }
 
 var (
-	es         server.Server
 	greeterSvc service.Service
 )
 
@@ -34,17 +31,17 @@ func init() {
 		service.Version("0.1.0"),
 	}...)
 
-	greeterSvc.Handle(handler.NewHandler(&StatusCheck{}))
+	greeterSvc.Handle(service.NewHandler(&StatusCheck{}))
 }
 
 func main() {
-	es = echo.NewEchoServer(
+	s, _ := server.NewServer(
 		server.Port("5499"),
 	)
 
-	es.Register(greeterSvc)
+	s.Register(greeterSvc)
 
-	if err := es.Start(); err != nil {
+	if err := s.Start(); err != nil {
 		log.Fatal(err)
 	}
 }

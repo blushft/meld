@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/blushft/meld/service/handler"
+	"github.com/blushft/meld/service"
 )
 
 type Greeter struct{}
@@ -17,7 +17,7 @@ type HelloResp struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (g *Greeter) Hello(ctx context.Context, req HelloReq, resp *HelloResp, opts ...handler.HandlerOption) error {
+func (g *Greeter) Hello(ctx context.Context, req HelloReq, resp *HelloResp, opts ...service.HandlerOption) error {
 	resp.Message = fmt.Sprintf("Hello, %s", req.Name)
 	return nil
 }
@@ -31,7 +31,7 @@ type WelcomeResp struct {
 	Message string `json:"message,omitempty"`
 }
 
-func (g *Greeter) Welcome(ctx context.Context, req WelcomeReq, resp *WelcomeResp, opts ...handler.HandlerOption) error {
+func (g *Greeter) Welcome(ctx context.Context, req WelcomeReq, resp *WelcomeResp, opts ...service.HandlerOption) error {
 	s := req.Name
 	if req.Salutory != "" {
 		s = fmt.Sprintf("%s %s", req.Salutory, req.Name)

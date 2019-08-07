@@ -7,7 +7,7 @@ type Message interface {
 
 type Request interface {
 	Message
-	
+
 	Handler() string
 	Method() string
 }
@@ -22,4 +22,11 @@ type Publication interface {
 
 type Event interface {
 	Message
+}
+
+type RPCRequest struct {
+	Service string      `json:"service,omitempty"`
+	Handler string      `json:"handler,omitempty"`
+	Method  string      `json:"method,omitempty"`
+	Args    interface{} `json:"args,omitempty"`
 }
