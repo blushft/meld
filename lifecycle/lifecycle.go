@@ -74,7 +74,7 @@ func (lc *lifecycle) Stop(ctx context.Context) error {
 	lc.Lock()
 	defer lc.Unlock()
 
-	return lc.opts.start(ctx)
+	return lc.opts.stop(ctx)
 }
 
 func (lc *lifecycle) Check(ctx context.Context) error {

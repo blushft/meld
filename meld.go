@@ -4,6 +4,7 @@ import (
 	"github.com/blushft/meld/service"
 )
 
-func NewService(opts ...service.Option) service.Service {
-	return nil
+// NewService is a convenience method for service.NewService()
+func NewService(h interface{}, opts ...service.Option) service.Service {
+	return service.NewService(h, opts...)
 }

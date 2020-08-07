@@ -7,6 +7,8 @@ import (
 	"sync"
 )
 
+// Service interface allows registration of one or many handlers and provides a Call
+// method to invoke methods on those handlers
 type Service interface {
 	Name() string
 	Options() *Options
@@ -18,6 +20,8 @@ type Service interface {
 	Call(req Request, resp interface{}) error
 }
 
+// NewService takes an initial handler (service wouldn't do much without one)
+// and a set of options and returns a Service
 func NewService(h interface{}, opts ...Option) Service {
 	return newService(h, opts...)
 }
@@ -52,6 +56,7 @@ func newService(v interface{}, opts ...Option) Service {
 
 }
 
+// Name returns the Service name
 func (s *service) Name() string {
 	s.RLock()
 	name := s.opts.Name
@@ -59,6 +64,7 @@ func (s *service) Name() string {
 	return name
 }
 
+// Options returns the Service Options
 func (s *service) Options() *Options {
 	s.RLock()
 	options := s.opts
@@ -66,6 +72,8 @@ func (s *service) Options() *Options {
 	return options
 }
 
+// Configure allows updating or sending additional Options after the
+// Service has been created.
 func (s *service) Configure(opts ...Option) {
 	s.Lock()
 	defer s.Unlock()
@@ -74,6 +82,7 @@ func (s *service) Configure(opts ...Option) {
 	}
 }
 
+// Handle takes a new Handler and adds it to the Service Handlers
 func (s *service) Handle(h Handler, opts ...HandlerOption) error {
 	s.handlers[h.Name()] = h
 	return nil
@@ -88,6 +97,7 @@ func (s *service) addHandler(v interface{}, opts ...HandlerOption) error {
 	return nil
 }
 
+// Handler returns a Handler identified by Name
 func (s *service) Handler(n string) Handler {
 	if h, ok := s.handlers[n]; ok {
 		return h
@@ -96,6 +106,7 @@ func (s *service) Handler(n string) Handler {
 	return nil
 }
 
+// Handlers returns a slice of Handler names
 func (s *service) Handlers() []string {
 	ret := make([]string, 0)
 	for k := range s.handlers {
@@ -104,6 +115,7 @@ func (s *service) Handlers() []string {
 	return ret
 }
 
+// Usage prints the Handler and Method definitions for the Service
 func (s *service) Usage() string {
 	handlers := make(map[string]map[string]interface{})
 	for _, h := range s.handlers {
@@ -129,6 +141,8 @@ func (s *service) Usage() string {
 	return string(outb)
 }
 
+//Call takes a Request and pointer to the response type and calls the Handler defined
+// in the Request object
 func (s *service) Call(req Request, resp interface{}) error {
 
 	h, ok := s.handlers[req.Handler()]
