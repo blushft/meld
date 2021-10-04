@@ -5,6 +5,7 @@ import (
 	"log"
 
 	greeter "github.com/blushft/meld/examples/greeter/service"
+	"github.com/blushft/meld/server/http"
 	"github.com/blushft/meld/service"
 
 	"github.com/blushft/meld/server"
@@ -35,7 +36,7 @@ func init() {
 }
 
 func main() {
-	s, _ := server.NewServer(
+	s, _ := http.New(
 		server.Port("5499"),
 	)
 

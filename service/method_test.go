@@ -52,7 +52,7 @@ func Test_extractSig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := extractMethod(tt.args.v, tt.args.d); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("extractMethod() = %v, want %v", got, tt.want)
+				t.Errorf("extractMethod() = %+v, want %v", got, tt.want)
 			}
 		})
 	}

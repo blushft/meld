@@ -47,7 +47,6 @@ func NewHandler(v interface{}, opts ...HandlerOption) Handler {
 }
 
 func newHandler(v interface{}, opts ...HandlerOption) Handler {
-
 	options := &HandlerOptions{
 		Meta: make(map[string]map[string]string),
 		Type: "rpc",

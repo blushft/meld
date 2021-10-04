@@ -7,6 +7,10 @@ type Logger interface {
 	Logf(string, ...interface{})
 }
 
+func NewLogger() Logger {
+	return &logger{}
+}
+
 type logger struct{}
 
 func (l *logger) Log(e ...interface{}) {
